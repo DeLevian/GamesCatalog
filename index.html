@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Catalog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="assets/js/config.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Sidebar Filtri -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1 id="site-logo"></h1>
+            </div>
+
+            <div class="filters-container">
+                <div class="filter-group search-group">
+                    <h3>Cerca</h3>
+                    <input type="text" id="search-input" placeholder="Cerca titolo, serie..." autocomplete="off">
+                    <div id="search-suggestions" class="search-suggestions"></div>
+                </div>
+
+                <div class="filter-group">
+                    <h3>Piattaforma</h3>
+                    <div id="filter-platform" class="checkbox-list"></div>
+                </div>
+
+                <div class="filter-group">
+                    <h3>Genere</h3>
+                    <div id="filter-genre" class="checkbox-list"></div>
+                </div>
+
+                <div class="filter-group">
+                    <h3>Funzioni</h3>
+                    <div id="filter-features" class="checkbox-list"></div>
+                </div>
+
+                <div class="filter-group">
+                    <h3>Etichette</h3>
+                    <div id="filter-labels" class="checkbox-list"></div>
+                </div>
+
+                <div class="filter-actions">
+                    <button id="reset-filters" class="btn btn-secondary">Resetta Filtri</button>
+                    <div id="results-count">0 risultati</div>
+                </div>
+
+                <div class="community-section">
+                    <h3>Community</h3>
+                    <button id="btn-suggest" class="btn-community btn-community-suggest" onclick="openSuggestModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v4" />
+                            <path d="M12 18v4" />
+                            <path d="M4.93 4.93l2.83 2.83" />
+                            <path d="M16.24 16.24l2.83 2.83" />
+                            <path d="M2 12h4" />
+                            <path d="M18 12h4" />
+                            <path d="M4.93 19.07l2.83-2.83" />
+                            <path d="M16.24 7.76l2.83-2.83" />
+                        </svg>
+                        Suggerisci un Gioco
+                    </button>
+                    <button id="btn-board" class="btn-community btn-community-board" onclick="openBoardModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                        Vedi Proposte
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="mobile-only">
+                    <h2 id="site-logo-mobile"></h2>
+                    <button id="mobile-filter-toggle" class="btn btn-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="4" y1="21" x2="4" y2="14"></line>
+                            <line x1="4" y1="10" x2="4" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12" y2="3"></line>
+                            <line x1="20" y1="21" x2="20" y2="16"></line>
+                            <line x1="20" y1="12" x2="20" y2="3"></line>
+                            <line x1="1" y1="14" x2="7" y2="14"></line>
+                            <line x1="9" y1="8" x2="15" y2="8"></line>
+                            <line x1="17" y1="16" x2="23" y2="16"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <!-- Toggle Sidebar Desktop -->
+                    <button id="desktop-sidebar-toggle" class="btn btn-icon desktop-only"
+                        title="Nascondi/Mostra Filtri">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                        </svg>
+                    </button>
+
+                    <!-- Ordinamento -->
+                    <select id="sort-select" class="toolbar-select" title="Ordinamento">
+                        <option value="az">A → Z</option>
+                        <option value="za">Z → A</option>
+                        <option value="platform">Piattaforma</option>
+                        <option value="genre">Genere</option>
+                    </select>
+
+                    <!-- View Switcher -->
+                    <div class="view-switcher">
+                        <button id="view-grid" class="btn btn-icon active" title="Griglia">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                        </button>
+                        <button id="view-list" class="btn btn-icon" title="Elenco">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+
+
+
+                    <!-- Mute/Unmute -->
+                    <button id="btn-mute" class="btn btn-icon" title="Audio On/Off">🔊</button>
+                </div>
+            </header>
+
+            <!-- Filtri Attivi -->
+            <div id="active-filters" class="active-filters"></div>
+
+            <!-- Grid Giochi -->
+            <div id="games-grid" class="games-grid">
+                <div class="loading-spinner">Caricamento catalogo...</div>
+            </div>
+
+            <!-- Paginazione -->
+            <div id="pagination-bar" class="pagination-bar" style="display: none;">
+                <div class="pagination-controls">
+                    <button id="btn-first-page" class="btn btn-page" title="Prima pagina">«</button>
+                    <button id="btn-prev-page" class="btn btn-page" title="Pagina precedente">‹</button>
+                    <span id="page-indicator" class="page-indicator">1 / 1</span>
+                    <button id="btn-next-page" class="btn btn-page" title="Pagina successiva">›</button>
+                    <button id="btn-last-page" class="btn btn-page" title="Ultima pagina">»</button>
+                </div>
+                <div class="pagination-perpage">
+                    <label for="select-perpage">Per pagina:</label>
+                    <select id="select-perpage">
+                        <option value="30">30</option>
+                        <option value="60" selected>60</option>
+                        <option value="120">120</option>
+                        <option value="0">Tutti</option>
+                    </select>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modale Dettaglio Gioco -->
+    <div id="game-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <div class="modal-image">
+                    <img id="modal-cover" src="" alt="Cover">
+                </div>
+                <div class="modal-info">
+                    <h2 id="modal-title">Titolo Gioco</h2>
+                    <div class="badges" id="modal-badges"></div>
+                    <p id="modal-desc" class="description"></p>
+
+                    <div class="meta-info">
+                        <p><strong>Sviluppatore:</strong> <span id="modal-dev"></span></p>
+                        <p><strong>Publisher:</strong> <span id="modal-pub"></span></p>
+                    </div>
+
+                    <hr>
+
+                    <div class="social-section">
+                        <h3>Commenti & Interazioni</h3>
+                        <div class="interaction-buttons">
+                            <button id="btn-like" class="btn btn-outline">
+                                ❤️ Mi Piace <span id="like-count">(0)</span>
+                            </button>
+                        </div>
+
+                        <div class="comments-list" id="comments-list">
+                            <p class="no-comments">Nessun commento ancora. Sii il primo!</p>
+                        </div>
+
+                        <div class="add-comment">
+                            <input type="text" id="comment-author" placeholder="Il tuo nome (opzionale)">
+                            <textarea id="comment-text" placeholder="Scrivi un commento pubblico..."></textarea>
+                            <button id="btn-submit-comment" class="btn btn-primary">Invia</button>
+                        </div>
+                    </div>
+
+                    <div class="similar-section">
+                        <h3>🎮 Potrebbe piacerti anche</h3>
+                        <div id="similar-games" class="similar-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Suggerisci Gioco -->
+    <div id="suggest-modal" class="modal">
+        <div class="modal-content suggest-modal-content">
+            <span class="close-suggest" onclick="closeSuggestModal()">&times;</span>
+            <div class="suggest-form">
+                <h2>Suggerisci un Gioco</h2>
+                <p class="suggest-subtitle">Manca un gioco nel catalogo? Proponicelo!</p>
+                <div class="form-group">
+                    <label for="suggest-title">Titolo del gioco *</label>
+                    <input type="text" id="suggest-title" placeholder="Es. The Legend of Zelda: Tears of the Kingdom"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="suggest-platform">Piattaforma (opzionale)</label>
+                    <input type="text" id="suggest-platform" placeholder="Es. Nintendo Switch, PS5, PC...">
+                </div>
+                <div class="form-group">
+                    <label for="suggest-notes">Note (opzionale)</label>
+                    <textarea id="suggest-notes" placeholder="Perché lo vorresti nel catalogo?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="suggest-author">Il tuo nome (opzionale)</label>
+                    <input type="text" id="suggest-author" placeholder="Anonimo">
+                </div>
+                <button id="btn-submit-suggestion" class="btn btn-primary btn-suggest-submit"
+                    onclick="submitSuggestion()">Invia Proposta</button>
+                <div id="suggest-feedback" class="suggest-feedback"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Bacheca Proposte -->
+    <div id="board-modal" class="modal">
+        <div class="modal-content board-modal-content">
+            <span class="close-board" onclick="closeBoardModal()">&times;</span>
+            <div class="board-container">
+                <h2>Proposte della Community</h2>
+                <p class="board-subtitle">Giochi suggeriti dagli utenti del catalogo</p>
+                <div id="suggestions-list" class="suggestions-list">
+                    <p class="loading-text">Caricamento proposte...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll to Top -->
+    <button id="btn-scroll-top" class="btn-scroll-top" title="Torna in cima">↑</button>
+
+    <script src="assets/js/sfx.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/suggestions.js"></script>
+    <script src="assets/js/app.js"></script>
+
+    <script>
+        document.getElementById('site-logo').innerHTML =
+            CONFIG.site.name + '<span class="highlight">' + CONFIG.site.nameHighlight + '</span>';
+        document.getElementById('site-logo-mobile').innerHTML =
+            CONFIG.site.name + '<span class="highlight">' + CONFIG.site.nameHighlight + '</span>';
+    </script>
+
+</body>
+
+</html>
