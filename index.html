@@ -199,7 +199,33 @@
                 <div class="modal-info">
                     <h2 id="modal-title">Titolo Gioco</h2>
                     <div class="badges" id="modal-badges"></div>
-                    <p id="modal-desc" class="description"></p>
+
+                    <!-- Tab Navigation -->
+                    <div class="modal-tabs">
+                        <button class="modal-tab active" data-tab="desc" onclick="switchTab('desc')">📖
+                            Descrizione</button>
+                        <button class="modal-tab" data-tab="solutions" onclick="switchTab('solutions')">🧩
+                            Soluzioni</button>
+                        <button class="modal-tab" data-tab="cheats" onclick="switchTab('cheats')">🎯 Trucchi e
+                            Segreti</button>
+                    </div>
+
+                    <!-- Tab Content Panels -->
+                    <div class="tab-panel active" id="tab-desc">
+                        <div id="modal-desc" class="tab-content-body"></div>
+                    </div>
+                    <div class="tab-panel" id="tab-solutions">
+                        <div id="modal-solutions" class="tab-content-body"></div>
+                    </div>
+                    <div class="tab-panel" id="tab-cheats">
+                        <div id="modal-cheats" class="tab-content-body"></div>
+                    </div>
+
+                    <!-- Screenshot Gallery -->
+                    <div class="screenshot-gallery" id="screenshot-gallery" style="display:none;">
+                        <h3>📸 Screenshot In-Game</h3>
+                        <div class="screenshot-strip" id="screenshot-strip"></div>
+                    </div>
 
                     <div class="meta-info">
                         <p><strong>Sviluppatore:</strong> <span id="modal-dev"></span></p>
@@ -279,6 +305,15 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Screenshot Lightbox -->
+    <div class="lightbox-overlay" id="lightbox-overlay">
+        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+        <button class="lightbox-nav lightbox-prev" onclick="navigateLightbox(-1)">‹</button>
+        <img class="lightbox-img" id="lightbox-img" src="" alt="Screenshot">
+        <button class="lightbox-nav lightbox-next" onclick="navigateLightbox(1)">›</button>
+        <div class="lightbox-counter" id="lightbox-counter"></div>
     </div>
 
     <!-- Scroll to Top -->

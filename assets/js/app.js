@@ -355,6 +355,17 @@ function toggleOverlay() {
 function scrollToTop() { document.querySelector('.main-content').scrollTo({ top: 0, behavior: 'smooth' }); }
 function closeGameModal() { document.getElementById('game-modal').classList.remove('show'); AppState.currentGameId = null; }
 
+// ===================== TAB SWITCHING =====================
+window.switchTab = function(tabId) {
+    document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    const btn = document.querySelector(`.modal-tab[data-tab="${tabId}"]`);
+    const panel = document.getElementById('tab-' + tabId);
+    if (btn) btn.classList.add('active');
+    if (panel) panel.classList.add('active');
+    SFX.click();
+};
+
 // ===================== MODALE =====================
 window.openModalByIndex = function (index) {
     const game = AppState.filteredGames[index];
@@ -363,6 +374,8 @@ window.openModalByIndex = function (index) {
 
     document.getElementById('modal-title').textContent = game.title;
     document.getElementById('modal-desc').innerHTML = game.description || "<em>Nessuna descrizione disponibile.</em>";
+    document.getElementById('modal-solutions').innerHTML = game.solutions || "<div class='tab-empty'><span class='tab-empty-icon'>🧩</span><p>Nessuna soluzione disponibile per questo gioco.</p></div>";
+    document.getElementById('modal-cheats').innerHTML = game.cheats || "<div class='tab-empty'><span class='tab-empty-icon'>🎯</span><p>Nessun trucco o segreto disponibile per questo gioco.</p></div>";
     document.getElementById('modal-dev').textContent = game.developers.join(', ') || "N/A";
     document.getElementById('modal-pub').textContent = game.publishers.join(', ') || "N/A";
 
@@ -375,6 +388,10 @@ window.openModalByIndex = function (index) {
         ...game.platforms.map(p => `<span class="badge">${escapeHtml(p)}</span>`)
     ].join('');
 
+    // Reset tab to Descrizione
+    switchTab('desc');
+
+    loadScreenshots(game);
     loadSocialData(game.id);
     renderSimilarGames(game);
     document.getElementById('game-modal').classList.add('show');
@@ -464,6 +481,92 @@ function restoreSidebarState() {
         document.querySelector('.sidebar').classList.add('sidebar-collapsed');
     }
 }
+
+// ===================== SCREENSHOT GALLERY =====================
+let lightboxImages = [];
+let lightboxIndex = 0;
+
+function sanitizeFilename(title) {
+    return title.replace(/[<>:"\/\\|?*]/g, '_').replace(/[\.\s]+$/, '');
+}
+
+function loadScreenshots(game) {
+    const gallery = document.getElementById('screenshot-gallery');
+    const strip = document.getElementById('screenshot-strip');
+    strip.innerHTML = '';
+    gallery.style.display = 'none';
+
+    const safeTitle = sanitizeFilename(game.title);
+    const platforms = game.platforms || [];
+    let found = [];
+    let checks = 0;
+    let totalChecks = platforms.length * 5; // max 5 screenshots per platform
+
+    if (totalChecks === 0) return;
+
+    platforms.forEach(platform => {
+        for (let i = 1; i <= 5; i++) {
+            const src = `assets/screenshots/${platform}/${safeTitle}_${String(i).padStart(2, '0')}.jpg`;
+            const img = new Image();
+            img.onload = function() {
+                found.push(src);
+                found.sort(); // keep order
+                renderScreenshots(found);
+            };
+            img.onerror = function() {
+                checks++;
+            };
+            img.src = src;
+        }
+    });
+}
+
+function renderScreenshots(urls) {
+    const gallery = document.getElementById('screenshot-gallery');
+    const strip = document.getElementById('screenshot-strip');
+    if (urls.length === 0) { gallery.style.display = 'none'; return; }
+    gallery.style.display = 'block';
+    strip.innerHTML = urls.map((url, i) => `
+        <div class="screenshot-thumb" onclick="openLightbox(${i})">
+            <img src="${url}" alt="Screenshot ${i + 1}" loading="lazy">
+        </div>
+    `).join('');
+    lightboxImages = urls;
+}
+
+window.openLightbox = function(index) {
+    lightboxIndex = index;
+    const overlay = document.getElementById('lightbox-overlay');
+    const img = document.getElementById('lightbox-img');
+    const counter = document.getElementById('lightbox-counter');
+    img.src = lightboxImages[index];
+    counter.textContent = `${index + 1} / ${lightboxImages.length}`;
+    overlay.classList.add('active');
+};
+
+window.closeLightbox = function() {
+    document.getElementById('lightbox-overlay').classList.remove('active');
+};
+
+window.navigateLightbox = function(direction) {
+    lightboxIndex = (lightboxIndex + direction + lightboxImages.length) % lightboxImages.length;
+    const img = document.getElementById('lightbox-img');
+    const counter = document.getElementById('lightbox-counter');
+    img.style.animation = 'none';
+    img.offsetHeight; // trigger reflow
+    img.style.animation = '';
+    img.src = lightboxImages[lightboxIndex];
+    counter.textContent = `${lightboxIndex + 1} / ${lightboxImages.length}`;
+};
+
+// Keyboard navigation for lightbox
+document.addEventListener('keydown', (e) => {
+    const overlay = document.getElementById('lightbox-overlay');
+    if (!overlay || !overlay.classList.contains('active')) return;
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowLeft') navigateLightbox(-1);
+    else if (e.key === 'ArrowRight') navigateLightbox(1);
+});
 
 document.addEventListener('DOMContentLoaded', init);
 
